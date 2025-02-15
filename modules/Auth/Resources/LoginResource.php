@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Modules\Auth\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+final class LoginResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'type' => $this->resource['type'],
+            'token' => $this->resource['token'],
+            'redirect' => $this->whenNotNull($this->resource['redirect']),
+            'force_change_password' => $this->whenNotNull($this->resource['force_change_password']),
+        ];
+    }
+}

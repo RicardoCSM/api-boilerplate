@@ -1,0 +1,17 @@
+image: bitnami/laravel
+
+pipelines:
+  default:
+    - step:
+        name: Default Behavior
+        script:
+          - echo "You pushed to a feature development branch. No action required."
+
+  branches:
+    main:
+      - step:
+          name: Deploy to Development vapor environment
+          script:
+            - apt-get update && apt-get install -y git
+            - composer install --no-interaction --no-progress --prefer-dist --no-dev -o
+            - php vendor/bin/vapor deploy development --commit="$BITBUCKET_COMMIT"

@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Modules\Auth\Actions;
+
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Modules\Auth\Models\ModelHasRole;
+use Modules\Common\Core\DTOs\DatatableDTO;
+use Modules\Common\Core\Support\Datatable;
+
+final readonly class FetchRoleMember
+{
+    public function handle(string $name, DatatableDTO $dto): LengthAwarePaginator|Collection
+    {
+        $query = ModelHasRole::query();
+        $query = ModelHasRole::members($query, $name);
+        $query = Datatable::applySort($query, $dto);
+
+        return Datatable::applyPagination($query, $dto);
+    }
+}
