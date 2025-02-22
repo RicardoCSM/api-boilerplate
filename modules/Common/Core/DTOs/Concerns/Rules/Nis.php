@@ -23,10 +23,10 @@ class Nis implements ValidationRule
         }
 
         for ($d = 0, $p = 2, $c = 9; $c >= 0; $c--, ($p < 9) ? $p++ : $p = 2) {
-            $d += $nis[$c] * $p;
+            $d += (int) $nis[$c] * $p;
         }
 
-        if (! ($nis[10] === (((10 * $d) % 11) % 10))) {
+        if (! ((int) $nis[10] === (((10 * $d) % 11) % 10))) {
             $fail('O campo :attribute é inválido.');
         }
     }
