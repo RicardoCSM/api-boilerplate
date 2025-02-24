@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\DocumentAI\Actions;
 
-use Modules\Common\Core\DTOs\Concerns\Rules\Cpf;
 use Modules\DocumentAI\DTOs\DocumentAIDTO;
 use Modules\DocumentAI\Exceptions\InvalidDocumentException;
 use Modules\DocumentAI\Support\DocumentAI;
@@ -33,10 +32,11 @@ final readonly class GetCpf
         $cpf = DocumentAI::getValueByType($entities, 'cpf');
         $cpf = preg_replace('/\D/', '', $cpf);
 
-        $cpfValidator = new Cpf();
-        if (! $cpfValidator->validate('cpf', $cpf, function () {})) {
+        if ($cpf === null || strlen($cpf) !== 11) {
             return null;
         }
+
+        $cpf = substr($cpf, 0, 3) . '.' . substr($cpf, 3, 3) . '.' . substr($cpf, 6, 3) . '-' . substr($cpf, 9, 2);
 
         return $cpf;
     }

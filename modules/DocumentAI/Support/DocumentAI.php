@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\DocumentAI\Support;
 
+use Exception;
 use Google\Cloud\DocumentAI\V1\Client\DocumentProcessorServiceClient;
 use Google\Cloud\DocumentAI\V1\Document;
 use Google\Cloud\DocumentAI\V1\ProcessRequest;
@@ -11,6 +12,7 @@ use Google\Cloud\DocumentAI\V1\RawDocument;
 use Google\Protobuf\Internal\RepeatedField;
 use Illuminate\Support\Facades\Storage;
 use Modules\Common\Core\DTOs\UploadedFileDTO;
+use Throwable;
 
 readonly class DocumentAI
 {
@@ -22,23 +24,47 @@ readonly class DocumentAI
         $name = "projects/{$projectId}/locations/{$location}/processors/{$processorId}";
         putenv('GOOGLE_APPLICATION_CREDENTIALS=' . base_path() . '/' . env('GOOGLE_APPLICATION_CREDENTIALS'));
 
-        $filePath = Storage::disk('central')->path($dto->key);
-        $encodedFile = file_get_contents($filePath);
-        $fileType = mime_content_type($filePath);
-        $client = new DocumentProcessorServiceClient();
+        $tempDir = storage_path('app/tmp');
+        $fileExtension = $dto->extension;
+        $tempPath = $tempDir . '/' . $dto->uuid . '.' . $fileExtension;
 
-        $rawDocument = new RawDocument();
-        $rawDocument->setContent($encodedFile);
-        $rawDocument->setMimeType($fileType);
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
 
-        $testRequest = new ProcessRequest([
-            'name' => $name,
-            'skip_human_review' => true,
-            'raw_document' => $rawDocument,
-        ]);
+        $document = null;
 
-        $response = $client->processDocument($testRequest);
-        $document = $response->getDocument();
+        try {
+            $fileContents = Storage::disk('central')->get($dto->key);
+            file_put_contents($tempPath, $fileContents);
+
+            if (! file_exists($tempPath)) {
+                throw new Exception("File could not be downloaded: {$tempPath}");
+            }
+
+            $fileType = mime_content_type($tempPath);
+
+            $client = new DocumentProcessorServiceClient();
+
+            $rawDocument = new RawDocument();
+            $rawDocument->setContent(file_get_contents($tempPath));
+            $rawDocument->setMimeType($fileType);
+
+            $testRequest = new ProcessRequest([
+                'name' => $name,
+                'skip_human_review' => true,
+                'raw_document' => $rawDocument,
+            ]);
+
+            $response = $client->processDocument($testRequest);
+            $document = $response->getDocument();
+        } catch (Throwable $e) {
+            throw $e;
+        } finally {
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
+        }
 
         return $document;
     }

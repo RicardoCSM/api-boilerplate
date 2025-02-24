@@ -14,7 +14,7 @@ use Modules\DocumentAI\Resources\CnhResource;
 use Modules\DocumentAI\Resources\CpfResource;
 use Modules\DocumentAI\Resources\IdentityResource;
 
-class IdentificationDocumentAiController extends Controller
+class IdentificationDocumentAIController extends Controller
 {
     public function getCpf(DocumentAIDTO $dto, GetCpf $action): ApiSuccessResponse
     {
